@@ -1,8 +1,8 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, table, td, text, tr, img)
-import Html.Attributes exposing (colspan, src, style)
+import Html exposing (Html, button, col, div, img, table, td, text, tr)
+import Html.Attributes exposing (colspan, src, style, width)
 import Html.Events exposing (onClick)
 
 
@@ -90,6 +90,302 @@ type UIState
 type alias Model =
     { card : Card
     , uiState : UIState
+    }
+
+
+type alias Score =
+    { yellow : Int
+    , blue : Int
+    , green : Int
+    , orange : Int
+    , purple : Int
+    , foxes : Int
+    , total : Int
+    }
+
+
+scoreYellow : Yellow -> Int
+scoreYellow yellow =
+    let
+        col1 =
+            if yellow.one3 == Checked && yellow.two2 == Checked && yellow.three1 == Checked then
+                10
+
+            else
+                0
+
+        col2 =
+            if yellow.one6 == Checked && yellow.two1 == Checked && yellow.four3 == Checked then
+                14
+
+            else
+                0
+
+        col3 =
+            if yellow.one5 == Checked && yellow.three2 == Checked && yellow.four4 == Checked then
+                16
+
+            else
+                0
+
+        col4 =
+            if yellow.two5 == Checked && yellow.three4 == Checked && yellow.four6 == Checked then
+                20
+
+            else
+                0
+    in
+    col1 + col2 + col3 + col4
+
+
+scoreBlue : Blue -> Int
+scoreBlue blue =
+    let
+        list =
+            [ blue.two, blue.three, blue.four, blue.five, blue.six, blue.seven, blue.eight, blue.nine, blue.ten, blue.eleven, blue.twelve ]
+
+        checked =
+            List.filter (\x -> x == Checked) list
+
+        numChecked =
+            List.length checked
+    in
+    case numChecked of
+        1 ->
+            1
+
+        2 ->
+            2
+
+        3 ->
+            4
+
+        4 ->
+            7
+
+        5 ->
+            11
+
+        6 ->
+            16
+
+        7 ->
+            22
+
+        8 ->
+            29
+
+        9 ->
+            37
+
+        10 ->
+            46
+
+        11 ->
+            56
+
+        otherwise ->
+            0
+
+
+scoreGreen : Green -> Int
+scoreGreen green =
+    let
+        checked =
+            List.filter (\x -> x == Checked) green
+
+        numChecked =
+            List.length checked
+    in
+    case numChecked of
+        1 ->
+            1
+
+        2 ->
+            3
+
+        3 ->
+            6
+
+        4 ->
+            10
+
+        5 ->
+            15
+
+        6 ->
+            21
+
+        7 ->
+            28
+
+        8 ->
+            36
+
+        9 ->
+            45
+
+        10 ->
+            55
+
+        11 ->
+            66
+
+        otherwise ->
+            0
+
+
+diceToFace : Dice -> Int
+diceToFace dice =
+    case dice of
+        One ->
+            1
+
+        Two ->
+            2
+
+        Three ->
+            3
+
+        Four ->
+            4
+
+        Five ->
+            5
+
+        Six ->
+            6
+
+        Empty ->
+            0
+
+
+scoreOrange : Orange -> Int
+scoreOrange orange =
+    let
+        faces =
+            List.map diceToFace orange
+
+        points =
+            List.indexedMap (\i val -> val * orangeIndexMultipler i) faces
+    in
+    List.sum points
+
+
+scorePurple : Purple -> Int
+scorePurple purple =
+    let
+        faces =
+            List.map diceToFace purple
+    in
+    List.sum faces
+
+
+yellowFox : Yellow -> Int
+yellowFox yellow =
+    if yellow.four3 == Checked && yellow.four4 == Checked && yellow.four6 == Checked then
+        1
+
+    else
+        0
+
+
+blueFox : Blue -> Int
+blueFox blue =
+    if blue.nine == Checked && blue.ten == Checked && blue.eleven == Checked && blue.twelve == Checked then
+        1
+
+    else
+        0
+
+
+greenFox : Green -> Int
+greenFox green =
+    let
+        numChecked =
+            List.length (List.filter (\x -> x == Checked) green)
+    in
+    if numChecked >= 7 then
+        1
+
+    else
+        0
+
+
+orangeFox : Orange -> Int
+orangeFox orange =
+    let
+        numFilled =
+            List.length (List.filter (\x -> x /= Empty) orange)
+    in
+    if numFilled >= 8 then
+        1
+
+    else
+        0
+
+
+purpleFox : Purple -> Int
+purpleFox purple =
+    let
+        numFilled =
+            List.length (List.filter (\x -> x /= Empty) purple)
+    in
+    if numFilled >= 7 then
+        1
+
+    else
+        0
+
+
+scoreOf : Card -> Score
+scoreOf card =
+    let
+        yellowScore =
+            scoreYellow card.yellow
+
+        blueScore =
+            scoreBlue card.blue
+
+        greenScore =
+            scoreGreen card.green
+
+        orangeScore =
+            scoreOrange card.orange
+
+        purpleScore =
+            scorePurple card.purple
+
+        numFoxes =
+            List.sum
+                [ yellowFox card.yellow
+                , blueFox card.blue
+                , greenFox card.green
+                , orangeFox card.orange
+                , purpleFox card.purple
+                ]
+
+        minScore =
+            case List.minimum [ yellowScore, blueScore, greenScore, orangeScore, purpleScore ] of
+                Just score ->
+                    score
+
+                Nothing ->
+                    0
+
+        foxScore =
+            numFoxes * minScore
+
+        totalScore =
+            List.sum [ yellowScore, blueScore, greenScore, orangeScore, purpleScore, foxScore ]
+    in
+    { yellow = yellowScore
+    , blue = blueScore
+    , green = greenScore
+    , orange = orangeScore
+    , purple = purpleScore
+    , foxes = foxScore
+    , total = totalScore
     }
 
 
@@ -649,6 +945,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx One model
+
                 ChoosePurple idx ->
                     updatePurple idx One model
 
@@ -659,6 +956,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx Two model
+
                 ChoosePurple idx ->
                     updatePurple idx Two model
 
@@ -669,6 +967,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx Three model
+
                 ChoosePurple idx ->
                     updatePurple idx Three model
 
@@ -679,6 +978,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx Four model
+
                 ChoosePurple idx ->
                     updatePurple idx Four model
 
@@ -689,6 +989,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx Five model
+
                 ChoosePurple idx ->
                     updatePurple idx Five model
 
@@ -699,6 +1000,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx Six model
+
                 ChoosePurple idx ->
                     updatePurple idx Six model
 
@@ -709,6 +1011,7 @@ update msg model =
             case model.uiState of
                 ChooseOrange idx ->
                     updateOrange idx Empty model
+
                 ChoosePurple idx ->
                     updatePurple idx Empty model
 
@@ -746,6 +1049,7 @@ updateOrange idx newDice model =
             { oldCard | orange = newOrange }
     in
     { model | card = newCard, uiState = Normal }
+
 
 updatePurple : Int -> Dice -> Model -> Model
 updatePurple idx newDice model =
@@ -788,7 +1092,11 @@ rerollButton bool =
 
 rerollCell : Int -> TriBool -> Html Msg
 rerollCell idx bool =
-    td [] [ button [ onClick (TapReroll idx) ] [ rerollButton bool ] ]
+    td []
+        [ htmlButton
+            (TapReroll idx)
+            [ rerollButton bool ]
+        ]
 
 
 plusOneButton : TriBool -> Html Msg
@@ -806,7 +1114,7 @@ plusOneButton bool =
 
 plusOneCell : Int -> TriBool -> Html Msg
 plusOneCell idx bool =
-    td [] [ button [ onClick (TapPlusOne idx) ] [ plusOneButton bool ] ]
+    td [] [ htmlButton (TapPlusOne idx) [ plusOneButton bool ] ]
 
 
 yellowCell : String -> Checkmark -> Msg -> Html Msg
@@ -820,35 +1128,41 @@ yellowCell label value msg =
                 Unchecked ->
                     label
     in
-    button [ onClick msg ] [ text txtLabel ]
+    textButton msg txtLabel
 
 
 yellowSection : Yellow -> Html Msg
 yellowSection yellow =
     table []
         [ tr []
-            [ td [] [ yellowCell "3" yellow.one3 TapYellowOne3 ]
-            , td [] [ yellowCell "6" yellow.one6 TapYellowOne6 ]
-            , td [] [ yellowCell "5" yellow.one5 TapYellowOne5 ]
-            , td [] [ text "X" ]
+            [ td [ style "width" "80px" ] [ yellowCell "3" yellow.one3 TapYellowOne3 ]
+            , td [ style "width" "80px" ] [ yellowCell "6" yellow.one6 TapYellowOne6 ]
+            , td [ style "width" "80px" ] [ yellowCell "5" yellow.one5 TapYellowOne5 ]
+            , td [ style "width" "80px" ] [ text "X" ]
             ]
         , tr []
-            [ td [] [ yellowCell "2" yellow.two2 TapYellowTwo2 ]
-            , td [] [ yellowCell "1" yellow.two1 TapYellowTwo1 ]
-            , td [] [ text "X" ]
-            , td [] [ yellowCell "5" yellow.two5 TapYellowTwo5 ]
+            [ td [ style "width" "80px" ] [ yellowCell "2" yellow.two2 TapYellowTwo2 ]
+            , td [ style "width" "80px" ] [ yellowCell "1" yellow.two1 TapYellowTwo1 ]
+            , td [ style "width" "80px" ] [ text "X" ]
+            , td [ style "width" "80px" ] [ yellowCell "5" yellow.two5 TapYellowTwo5 ]
             ]
         , tr []
-            [ td [] [ yellowCell "1" yellow.three1 TapYellowThree1 ]
-            , td [] [ text "X" ]
-            , td [] [ yellowCell "2" yellow.three2 TapYellowThree2 ]
-            , td [] [ yellowCell "4" yellow.three4 TapYellowThree4 ]
+            [ td [ style "width" "80px" ] [ yellowCell "1" yellow.three1 TapYellowThree1 ]
+            , td [ style "width" "80px" ] [ text "X" ]
+            , td [ style "width" "80px" ] [ yellowCell "2" yellow.three2 TapYellowThree2 ]
+            , td [ style "width" "80px" ] [ yellowCell "4" yellow.three4 TapYellowThree4 ]
             ]
         , tr []
-            [ td [] [ text "X" ]
-            , td [] [ yellowCell "3" yellow.four3 TapYellowFour3 ]
-            , td [] [ yellowCell "4" yellow.four4 TapYellowFour4 ]
-            , td [] [ yellowCell "6" yellow.four6 TapYellowFour6 ]
+            [ td [ style "width" "80px" ] [ text "X" ]
+            , td [ style "width" "80px" ] [ yellowCell "3" yellow.four3 TapYellowFour3 ]
+            , td [ style "width" "80px" ] [ yellowCell "4" yellow.four4 TapYellowFour4 ]
+            , td [ style "width" "80px" ] [ yellowCell "6" yellow.four6 TapYellowFour6 ]
+            ]
+        , tr []
+            [ td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "10" ]
+            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "14" ]
+            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "16" ]
+            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "20" ]
             ]
         ]
 
@@ -864,29 +1178,61 @@ blueCell label value msg =
                 Unchecked ->
                     label
     in
-    button [ onClick msg ] [ text txtLabel ]
+    textButton msg txtLabel
 
 
 blueSection : Blue -> Html Msg
 blueSection blue =
     table []
         [ tr []
-            [ td [] []
-            , td [] [ blueCell "2" blue.two TapBlue2 ]
-            , td [] [ blueCell "3" blue.three TapBlue3 ]
-            , td [] [ blueCell "4" blue.four TapBlue4 ]
+            [ td [ colspan 4 ]
+                [ table [ style "width" "100%" ]
+                    [ tr []
+                        [ td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "1" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "2" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "4" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "7" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "11" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "16" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "22" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "29" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "37" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "46" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "56" ]
+                        ]
+                    , tr []
+                        [ td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "1" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "2" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "3" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "4" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "5" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "6" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "7" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "8" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "9" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "10" ]
+                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "11" ]
+                        ]
+                    ]
+                ]
             ]
         , tr []
-            [ td [] [ blueCell "5" blue.five TapBlue5 ]
-            , td [] [ blueCell "6" blue.six TapBlue6 ]
-            , td [] [ blueCell "7" blue.seven TapBlue7 ]
-            , td [] [ blueCell "8" blue.eight TapBlue8 ]
+            [ td [ style "width" "80px" ] []
+            , td [ style "width" "80px" ] [ blueCell "2" blue.two TapBlue2 ]
+            , td [ style "width" "80px" ] [ blueCell "3" blue.three TapBlue3 ]
+            , td [ style "width" "80px" ] [ blueCell "4" blue.four TapBlue4 ]
             ]
         , tr []
-            [ td [] [ blueCell "9" blue.nine TapBlue9 ]
-            , td [] [ blueCell "10" blue.ten TapBlue10 ]
-            , td [] [ blueCell "11" blue.eleven TapBlue11 ]
-            , td [] [ blueCell "12" blue.twelve TapBlue12 ]
+            [ td [ style "width" "80px" ] [ blueCell "5" blue.five TapBlue5 ]
+            , td [ style "width" "80px" ] [ blueCell "6" blue.six TapBlue6 ]
+            , td [ style "width" "80px" ] [ blueCell "7" blue.seven TapBlue7 ]
+            , td [ style "width" "80px" ] [ blueCell "8" blue.eight TapBlue8 ]
+            ]
+        , tr []
+            [ td [ style "width" "80px" ] [ blueCell "9" blue.nine TapBlue9 ]
+            , td [ style "width" "80px" ] [ blueCell "10" blue.ten TapBlue10 ]
+            , td [ style "width" "80px" ] [ blueCell "11" blue.eleven TapBlue11 ]
+            , td [ style "width" "80px" ] [ blueCell "12" blue.twelve TapBlue12 ]
             ]
         ]
 
@@ -902,7 +1248,7 @@ greenCell label value msg =
                 Unchecked ->
                     label
     in
-    button [ onClick msg ] [ text txtLabel ]
+    textButton msg txtLabel
 
 
 greenSection : Green -> Html Msg
@@ -923,31 +1269,50 @@ greenSection green =
             ]
 
         cell =
-            \x y z -> greenCell x y (TapGreen z)
+            \x y z -> td [] [ greenCell x y (TapGreen z) ]
     in
     table []
-        (List.map3 cell labels green (List.range 0 11))
+        [ tr []
+            [ td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "1" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "3" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "6" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "10" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "15" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "21" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "28" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "36" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "45" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "55" ]
+            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "66" ]
+            ]
+        , tr [] (List.map3 cell labels green (List.range 0 11))
+        ]
+
+
+orangeIndexMultipler : Int -> Int
+orangeIndexMultipler idx =
+    case idx of
+        3 ->
+            2
+
+        6 ->
+            2
+
+        8 ->
+            2
+
+        10 ->
+            3
+
+        otherwise ->
+            1
 
 
 orangeCell : Int -> Dice -> Html Msg
 orangeCell idx dice =
     let
         mult =
-            case idx of
-                3 ->
-                    2
-
-                6 ->
-                    2
-
-                8 ->
-                    2
-
-                10 ->
-                    3
-
-                otherwise ->
-                    1
+            orangeIndexMultipler idx
 
         val =
             case dice of
@@ -981,9 +1346,7 @@ orangeCell idx dice =
                 otherwise ->
                     String.fromInt (val * mult)
     in
-    td []
-        [ button [ onClick (TapOrange idx) ] [ text label ]
-        ]
+    td [] [ textButton (TapOrange idx) label ]
 
 
 orangeSection : Orange -> Html Msg
@@ -1029,48 +1392,82 @@ purpleCell idx dice =
                     String.fromInt val
     in
     td []
-        [ button [ onClick (TapPurple idx) ] [ text label ]
-        ]
-
+        [ textButton (TapPurple idx) label ]
 
 
 purpleSection : Purple -> Html Msg
 purpleSection purple =
     table []
         [ tr []
-            (List.intersperse (td [] [text "<"]) (List.indexedMap purpleCell purple))
+            (List.intersperse (td [ style "font-weight" "bold", style "font-size" "20px", style "color" "white" ] [ text "<" ]) (List.indexedMap purpleCell purple))
         ]
 
+
+viewScore : Score -> Html Msg
+viewScore score =
+    table []
+        [ tr []
+            [ td [] [ text "Yellow" ]
+            , td [] [ text (String.fromInt score.yellow) ]
+            ]
+        , tr []
+            [ td [] [ text "Blue" ]
+            , td [] [ text (String.fromInt score.blue) ]
+            ]
+        , tr []
+            [ td [] [ text "Green" ]
+            , td [] [ text (String.fromInt score.green) ]
+            ]
+        , tr []
+            [ td [] [ text "Orange" ]
+            , td [] [ text (String.fromInt score.orange) ]
+            ]
+        , tr []
+            [ td [] [ text "Purple" ]
+            , td [] [ text (String.fromInt score.purple) ]
+            ]
+        , tr []
+            [ td [] [ text "Foxes" ]
+            , td [] [ text (String.fromInt score.foxes) ]
+            ]
+        , tr []
+            [ td [] [ text "Total" ]
+            , td [] [ text (String.fromInt score.total) ]
+            ]
+        ]
 
 
 viewNormal : Card -> Html Msg
 viewNormal card =
     div []
-        [ table []
-            [ tr [ colspan 2 ] [ table [] [ tr [] (List.indexedMap rerollCell card.rerolls) ] ]
-            , tr [ colspan 2 ] [ table [] [ tr [] (List.indexedMap plusOneCell card.plusOnes) ] ]
+        [ table [ style "width" "100%" ]
+            [ col [ width 1 ] []
+            , col [ width 1 ] []
+            , tr [] [ td [ colspan 2 ] [ table [] [ tr [] (List.indexedMap rerollCell card.rerolls) ] ] ]
+            , tr [] [ td [ colspan 2 ] [ table [] [ tr [] (List.indexedMap plusOneCell card.plusOnes) ] ] ]
             , tr []
-                [ td []
+                [ td [ style "background-color" "yellow" ]
                     [ yellowSection card.yellow
                     ]
-                , td [] [ blueSection card.blue ]
+                , td [ style "background-color" "blue" ] [ blueSection card.blue ]
                 ]
-            , tr [ colspan 2 ]
-                [ td []
+            , tr []
+                [ td [ colspan 2, style "background-color" "green" ]
                     [ greenSection card.green
                     ]
                 ]
-            , tr [ colspan 2 ]
-                [ td []
+            , tr []
+                [ td [ colspan 2, style "background-color" "orange" ]
                     [ orangeSection card.orange
                     ]
                 ]
-            , tr [ colspan 2 ]
-                [ td []
+            , tr []
+                [ td [ colspan 2, style "background-color" "purple" ]
                     [ purpleSection card.purple
                     ]
                 ]
             ]
+        , viewScore (scoreOf card)
         ]
 
 
@@ -1078,31 +1475,53 @@ viewPick : Int -> Html Msg
 viewPick idx =
     table []
         [ tr []
-            [ td [] [ button [ onClick TapDice1 ] [ text "1" ] ]
-            , td [] [ button [ onClick TapDice2 ] [ text "2" ] ]
+            [ td [] [ textButton TapDice1 "1" ]
+            , td [] [ textButton TapDice2 "2" ]
+            , td [] [ textButton TapDice3 "3" ]
             ]
         , tr []
-            [ td [] [ button [ onClick TapDice3 ] [ text "3" ] ]
-            , td [] [ button [ onClick TapDice4 ] [ text "4" ] ]
-            ]
-        , tr []
-            [ td [] [ button [ onClick TapDice5 ] [ text "5" ] ]
-            , td [] [ button [ onClick TapDice6 ] [ text "6" ] ]
+            [ td [] [ textButton TapDice4 "4" ]
+            , td [] [ textButton TapDice5 "5" ]
+            , td [] [ textButton TapDice6 "6" ]
             ]
         , tr [ colspan 2 ]
-            [ td [] [ button [ onClick TapDiceClear ] [ text "X" ] ]
+            [ td [] [ textButton TapDiceClear "X" ]
             ]
         ]
 
 
+textButton : Msg -> String -> Html Msg
+textButton msg label =
+    button
+        [ onClick msg
+        , style "width" "80px"
+        , style "height" "80px"
+        , style "font-size" "20px"
+        , style "font-weight" "thin"
+        ]
+        [ text label ]
+
+
+htmlButton : Msg -> List (Html Msg) -> Html Msg
+htmlButton msg body =
+    button
+        [ onClick msg
+        , style "width" "100px"
+        , style "height" "100px"
+        , style "font-size" "20px"
+        , style "font-weight" "thin"
+        ]
+        body
+
+
 view : Model -> Html Msg
 view model =
-  case model.uiState of
-    Normal ->
-      viewNormal model.card
+    case model.uiState of
+        Normal ->
+            viewNormal model.card
 
-    ChooseOrange idx ->
-      viewPick idx
+        ChooseOrange idx ->
+            viewPick idx
 
-    ChoosePurple idx ->
-      viewPick idx
+        ChoosePurple idx ->
+            viewPick idx
