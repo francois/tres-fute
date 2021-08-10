@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (Html, button, col, div, img, span, table, td, text, tr)
-import Html.Attributes exposing (colspan, src, style, width)
+import Html.Attributes exposing (colspan, rowspan, src, style, width)
 import Html.Events exposing (onClick)
 
 
@@ -71,7 +71,8 @@ type alias Purple =
 
 
 type alias Card =
-    { rerolls : List TriBool
+    { turns : List Bool
+    , rerolls : List TriBool
     , plusOnes : List TriBool
     , yellow : Yellow
     , blue : Blue
@@ -394,6 +395,7 @@ init =
     { card =
         { rerolls = List.repeat 7 Unavailable
         , plusOnes = List.repeat 7 Unavailable
+        , turns = List.repeat 6 False
         , yellow =
             { one3 = Unchecked
             , one6 = Unchecked
@@ -432,6 +434,7 @@ init =
 type Msg
     = TapReroll Int
     | TapPlusOne Int
+    | TapTurn Int
     | TapYellowOne3
     | TapYellowOne6
     | TapYellowOne5
@@ -498,6 +501,30 @@ flipCheckmark value =
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        TapTurn idx ->
+            let
+                oldTurns =
+                    model.card.turns
+
+                newTurns =
+                    List.indexedMap
+                        (\i val ->
+                            if i == idx then
+                                not val
+
+                            else
+                                val
+                        )
+                        oldTurns
+
+                oldCard =
+                    model.card
+
+                newCard =
+                    { oldCard | turns = newTurns }
+            in
+            { model | card = newCard }
+
         TapReroll idx ->
             let
                 oldRerolls =
@@ -1077,6 +1104,23 @@ updatePurple idx newDice model =
     { model | card = newCard, uiState = Normal }
 
 
+turnButton : Int -> Bool -> Html Msg
+turnButton idx state =
+    case state of
+        True ->
+            text ("X" ++ String.fromInt idx)
+
+        False ->
+            text (String.fromInt idx)
+
+
+turnCell : Int -> Bool -> Html Msg
+turnCell idx state =
+    td []
+        [ htmlButton (TapTurn idx) [ turnButton (idx + 1) state ]
+        ]
+
+
 rerollButton : TriBool -> Html Msg
 rerollButton bool =
     case bool of
@@ -1133,40 +1177,40 @@ yellowCell label value msg =
 
 yellowSection : Yellow -> Html Msg
 yellowSection yellow =
-    table []
+    table [ style "text-align" "center" ]
         [ tr []
-            [ td [ style "width" "80px" ] [ yellowCell "3" yellow.one3 TapYellowOne3 ]
-            , td [ style "width" "80px" ] [ yellowCell "6" yellow.one6 TapYellowOne6 ]
-            , td [ style "width" "80px" ] [ yellowCell "5" yellow.one5 TapYellowOne5 ]
-            , td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
+            [ td [] [ yellowCell "3" yellow.one3 TapYellowOne3 ]
+            , td [] [ yellowCell "6" yellow.one6 TapYellowOne6 ]
+            , td [] [ yellowCell "5" yellow.one5 TapYellowOne5 ]
+            , td [] [ text "X" ]
             , bonusCell BonusBlue
             ]
         , tr []
-            [ td [ style "width" "80px" ] [ yellowCell "2" yellow.two2 TapYellowTwo2 ]
-            , td [ style "width" "80px" ] [ yellowCell "1" yellow.two1 TapYellowTwo1 ]
-            , td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
-            , td [ style "width" "80px" ] [ yellowCell "5" yellow.two5 TapYellowTwo5 ]
+            [ td [] [ yellowCell "2" yellow.two2 TapYellowTwo2 ]
+            , td [] [ yellowCell "1" yellow.two1 TapYellowTwo1 ]
+            , td [] [ text "X" ]
+            , td [] [ yellowCell "5" yellow.two5 TapYellowTwo5 ]
             , bonusCell (BonusOrange 4)
             ]
         , tr []
-            [ td [ style "width" "80px" ] [ yellowCell "1" yellow.three1 TapYellowThree1 ]
-            , td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
-            , td [ style "width" "80px" ] [ yellowCell "2" yellow.three2 TapYellowThree2 ]
-            , td [ style "width" "80px" ] [ yellowCell "4" yellow.three4 TapYellowThree4 ]
+            [ td [] [ yellowCell "1" yellow.three1 TapYellowThree1 ]
+            , td [] [ text "X" ]
+            , td [] [ yellowCell "2" yellow.three2 TapYellowThree2 ]
+            , td [] [ yellowCell "4" yellow.three4 TapYellowThree4 ]
             , bonusCell BonusGreen
             ]
         , tr []
-            [ td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
-            , td [ style "width" "80px" ] [ yellowCell "3" yellow.four3 TapYellowFour3 ]
-            , td [ style "width" "80px" ] [ yellowCell "4" yellow.four4 TapYellowFour4 ]
-            , td [ style "width" "80px" ] [ yellowCell "6" yellow.four6 TapYellowFour6 ]
+            [ td [] [ text "X" ]
+            , td [] [ yellowCell "3" yellow.four3 TapYellowFour3 ]
+            , td [] [ yellowCell "4" yellow.four4 TapYellowFour4 ]
+            , td [] [ yellowCell "6" yellow.four6 TapYellowFour6 ]
             , bonusCell BonusFox
             ]
         , tr []
-            [ td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "10" ]
-            , td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "14" ]
-            , td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "16" ]
-            , td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "20" ]
+            [ td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "10" ]
+            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "14" ]
+            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "16" ]
+            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "20" ]
             , bonusCell BonusPlusOne
             ]
         ]
@@ -1191,32 +1235,32 @@ blueSection blue =
     table []
         [ tr []
             [ td [ colspan 4 ]
-                [ table [ style "width" "100%" ]
+                [ table [ style "width" "100%", style "text-align" "right", style "color" "white", style "font-weight" "bold", style "font-size" "20px" ]
                     [ tr []
-                        [ td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "1" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "2" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "4" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "7" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "11" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "16" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "22" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "29" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "37" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "46" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "56" ]
+                        [ td [] [ text "1" ]
+                        , td [] [ text "2" ]
+                        , td [] [ text "4" ]
+                        , td [] [ text "7" ]
+                        , td [] [ text "11" ]
+                        , td [] [ text "16" ]
+                        , td [] [ text "22" ]
+                        , td [] [ text "29" ]
+                        , td [] [ text "37" ]
+                        , td [] [ text "46" ]
+                        , td [] [ text "56" ]
                         ]
                     , tr []
-                        [ td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "1" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "2" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "3" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "4" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "5" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "6" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "7" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "8" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "9" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "10" ]
-                        , td [ style "text-align" "right", style "color" "white", style "font-weight" "bold" ] [ text "11" ]
+                        [ td [] [ text "1" ]
+                        , td [] [ text "2" ]
+                        , td [] [ text "3" ]
+                        , td [] [ text "4" ]
+                        , td [] [ text "5" ]
+                        , td [] [ text "6" ]
+                        , td [] [ text "7" ]
+                        , td [] [ text "8" ]
+                        , td [] [ text "9" ]
+                        , td [] [ text "10" ]
+                        , td [] [ text "11" ]
                         ]
                     ]
                 ]
@@ -1286,18 +1330,18 @@ greenSection green =
             \x y z -> td [] [ greenCell x y (TapGreen z) ]
     in
     table []
-        [ tr []
-            [ td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "1" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "3" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "6" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "10" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "15" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "21" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "28" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "36" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "45" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "55" ]
-            , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "66" ]
+        [ tr [ style "color" "white", style "font-weight" "bold", style "font-size" "20px", style "text-align" "center" ]
+            [ td [] [ text "1" ]
+            , td [] [ text "3" ]
+            , td [] [ text "6" ]
+            , td [] [ text "10" ]
+            , td [] [ text "15" ]
+            , td [] [ text "21" ]
+            , td [] [ text "28" ]
+            , td [] [ text "36" ]
+            , td [] [ text "45" ]
+            , td [] [ text "55" ]
+            , td [] [ text "66" ]
             ]
         , tr [] (List.map3 cell labels green (List.range 0 11))
         , tr []
@@ -1483,6 +1527,7 @@ type Bonus
     | BonusReroll
     | BonusYellow
     | BonusPurple Int
+    | BonusXOr6
 
 
 bonusCell : Bonus -> Html Msg
@@ -1513,6 +1558,9 @@ bonusCell bonus =
 
                 BonusPurple _ ->
                     "purple"
+
+                BonusXOr6 ->
+                    "black"
 
         textColor =
             case bonus of
@@ -1547,6 +1595,9 @@ bonusCell bonus =
 
                 BonusYellow ->
                     "X"
+
+                BonusXOr6 ->
+                    "X|6"
     in
     td [ style "background-color" backgroundColor, style "text-align" "center", style "width" "80px", style "height" "80px", style "color" textColor ] [ span [ style "padding" "20px", style "font-size" "30px" ] [ text label ] ]
 
@@ -1585,14 +1636,39 @@ viewScore score =
         ]
 
 
+turnSection : List Bool -> Html Msg
+turnSection turns =
+    table []
+        [ tr [] (List.indexedMap turnCell turns)
+        , tr []
+            [ td [] [ bonusCell BonusReroll ]
+            , td [] [ bonusCell BonusPlusOne ]
+            , td [] [ bonusCell BonusReroll ]
+            , td [] [ bonusCell BonusXOr6 ]
+            , td [] []
+            , td [] []
+            ]
+        ]
+
+
 viewNormal : Card -> Html Msg
 viewNormal card =
     div []
         [ table [ style "width" "100%" ]
             [ col [ width 1 ] []
             , col [ width 1 ] []
-            , tr [] [ td [ colspan 2 ] [ table [] [ tr [] (List.indexedMap rerollCell card.rerolls) ] ] ]
-            , tr [] [ td [ colspan 2 ] [ table [] [ tr [] (List.indexedMap plusOneCell card.plusOnes) ] ] ]
+            , tr []
+                [ td [ colspan 2 ]
+                    [ table []
+                        [ tr []
+                            [ td [] [ turnSection card.turns ]
+                            , td [ rowspan 4, style "vertical-align" "top", style "font-size" "20px" ] [ viewScore (scoreOf card) ]
+                            ]
+                        , tr [] [ table [] [ tr [] [ tr [] (List.indexedMap rerollCell card.rerolls) ] ] ]
+                        , tr [] [ table [] [ tr [] [ tr [] (List.indexedMap plusOneCell card.plusOnes) ] ] ]
+                        ]
+                    ]
+                ]
             , tr [] [ td [ colspan 2 ] [ text "\u{00A0}" ] ]
             , tr []
                 [ td [ style "background-color" "yellow" ]
@@ -1619,7 +1695,6 @@ viewNormal card =
                     ]
                 ]
             ]
-        , viewScore (scoreOf card)
         ]
 
 
