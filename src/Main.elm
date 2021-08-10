@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, col, div, img, table, td, text, tr)
+import Html exposing (Html, button, col, div, img, span, table, td, text, tr)
 import Html.Attributes exposing (colspan, src, style, width)
 import Html.Events exposing (onClick)
 
@@ -1138,31 +1138,36 @@ yellowSection yellow =
             [ td [ style "width" "80px" ] [ yellowCell "3" yellow.one3 TapYellowOne3 ]
             , td [ style "width" "80px" ] [ yellowCell "6" yellow.one6 TapYellowOne6 ]
             , td [ style "width" "80px" ] [ yellowCell "5" yellow.one5 TapYellowOne5 ]
-            , td [ style "width" "80px" ] [ text "X" ]
+            , td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
+            , bonusCell BonusBlue
             ]
         , tr []
             [ td [ style "width" "80px" ] [ yellowCell "2" yellow.two2 TapYellowTwo2 ]
             , td [ style "width" "80px" ] [ yellowCell "1" yellow.two1 TapYellowTwo1 ]
-            , td [ style "width" "80px" ] [ text "X" ]
+            , td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
             , td [ style "width" "80px" ] [ yellowCell "5" yellow.two5 TapYellowTwo5 ]
+            , bonusCell (BonusOrange 4)
             ]
         , tr []
             [ td [ style "width" "80px" ] [ yellowCell "1" yellow.three1 TapYellowThree1 ]
-            , td [ style "width" "80px" ] [ text "X" ]
+            , td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
             , td [ style "width" "80px" ] [ yellowCell "2" yellow.three2 TapYellowThree2 ]
             , td [ style "width" "80px" ] [ yellowCell "4" yellow.three4 TapYellowThree4 ]
+            , bonusCell BonusGreen
             ]
         , tr []
-            [ td [ style "width" "80px" ] [ text "X" ]
+            [ td [ style "text-align" "center", style "width" "80px" ] [ text "X" ]
             , td [ style "width" "80px" ] [ yellowCell "3" yellow.four3 TapYellowFour3 ]
             , td [ style "width" "80px" ] [ yellowCell "4" yellow.four4 TapYellowFour4 ]
             , td [ style "width" "80px" ] [ yellowCell "6" yellow.four6 TapYellowFour6 ]
+            , bonusCell BonusFox
             ]
         , tr []
-            [ td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "10" ]
-            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "14" ]
-            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "16" ]
-            , td [ style "font-size" "20px", style "font-weight" "bold" ] [ text "20" ]
+            [ td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "10" ]
+            , td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "14" ]
+            , td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "16" ]
+            , td [ style "text-align" "center", style "font-size" "20px", style "font-weight" "bold" ] [ text "20" ]
+            , bonusCell BonusPlusOne
             ]
         ]
 
@@ -1221,18 +1226,27 @@ blueSection blue =
             , td [ style "width" "80px" ] [ blueCell "2" blue.two TapBlue2 ]
             , td [ style "width" "80px" ] [ blueCell "3" blue.three TapBlue3 ]
             , td [ style "width" "80px" ] [ blueCell "4" blue.four TapBlue4 ]
+            , bonusCell (BonusOrange 5)
             ]
         , tr []
             [ td [ style "width" "80px" ] [ blueCell "5" blue.five TapBlue5 ]
             , td [ style "width" "80px" ] [ blueCell "6" blue.six TapBlue6 ]
             , td [ style "width" "80px" ] [ blueCell "7" blue.seven TapBlue7 ]
             , td [ style "width" "80px" ] [ blueCell "8" blue.eight TapBlue8 ]
+            , bonusCell BonusYellow
             ]
         , tr []
             [ td [ style "width" "80px" ] [ blueCell "9" blue.nine TapBlue9 ]
             , td [ style "width" "80px" ] [ blueCell "10" blue.ten TapBlue10 ]
             , td [ style "width" "80px" ] [ blueCell "11" blue.eleven TapBlue11 ]
             , td [ style "width" "80px" ] [ blueCell "12" blue.twelve TapBlue12 ]
+            , bonusCell BonusFox
+            ]
+        , tr []
+            [ bonusCell BonusReroll
+            , bonusCell BonusGreen
+            , bonusCell (BonusPurple 6)
+            , bonusCell BonusPlusOne
             ]
         ]
 
@@ -1286,6 +1300,20 @@ greenSection green =
             , td [ style "color" "white", style "font-weight" "bold", style "font-size" "20px" ] [ text "66" ]
             ]
         , tr [] (List.map3 cell labels green (List.range 0 11))
+        , tr []
+            [ td [] []
+            , td [] []
+            , td [] []
+            , bonusCell BonusPlusOne
+            , td [] []
+            , bonusCell BonusBlue
+            , bonusCell BonusFox
+            , td [] []
+            , bonusCell (BonusPurple 6)
+            , bonusCell BonusReroll
+            , td [] []
+            , td [] []
+            ]
         ]
 
 
@@ -1337,16 +1365,30 @@ orangeCell idx dice =
                 Six ->
                     6
 
-        label =
+        body =
             case dice of
                 Empty ->
-                    "\u{00A0}"
+                    if mult > 1 then
+                        button
+                            [ onClick (TapOrange idx)
+                            , style "width" "80px"
+                            , style "height" "80px"
+                            , style "font-size" "20px"
+                            , style "font-weight" "thin"
+                            ]
+                            [ span [ style "color" "lightslategray" ] [ text ("×" ++ String.fromInt mult) ] ]
 
-                -- non-breaking space
+                    else
+                        textButton (TapOrange idx) "\u{00A0}"
+
                 otherwise ->
-                    String.fromInt (val * mult)
+                    let
+                        label =
+                            String.fromInt (val * mult)
+                    in
+                    textButton (TapOrange idx) label
     in
-    td [] [ textButton (TapOrange idx) label ]
+    td [] [ body ]
 
 
 orangeSection : Orange -> Html Msg
@@ -1354,6 +1396,20 @@ orangeSection orange =
     table []
         [ tr []
             (List.indexedMap orangeCell orange)
+        , tr []
+            [ td [] []
+            , td [] []
+            , bonusCell BonusReroll
+            , td [] []
+            , bonusCell BonusYellow
+            , bonusCell BonusPlusOne
+            , td [] []
+            , bonusCell BonusFox
+            , td [] []
+            , bonusCell (BonusPurple 6)
+            , td [] []
+            , td [] []
+            ]
         ]
 
 
@@ -1400,7 +1456,99 @@ purpleSection purple =
     table []
         [ tr []
             (List.intersperse (td [ style "font-weight" "bold", style "font-size" "20px", style "color" "white" ] [ text "<" ]) (List.indexedMap purpleCell purple))
+        , tr []
+            (List.intersperse (td [] [])
+                [ td [] []
+                , td [] []
+                , bonusCell BonusReroll
+                , bonusCell BonusBlue
+                , bonusCell BonusPlusOne
+                , bonusCell BonusYellow
+                , bonusCell BonusFox
+                , bonusCell BonusReroll
+                , bonusCell BonusGreen
+                , bonusCell (BonusOrange 6)
+                , bonusCell BonusPlusOne
+                ]
+            )
         ]
+
+
+type Bonus
+    = BonusBlue
+    | BonusOrange Int
+    | BonusGreen
+    | BonusFox
+    | BonusPlusOne
+    | BonusReroll
+    | BonusYellow
+    | BonusPurple Int
+
+
+bonusCell : Bonus -> Html Msg
+bonusCell bonus =
+    let
+        backgroundColor =
+            case bonus of
+                BonusBlue ->
+                    "blue"
+
+                BonusOrange _ ->
+                    "orange"
+
+                BonusGreen ->
+                    "green"
+
+                BonusFox ->
+                    "transparent"
+
+                BonusPlusOne ->
+                    "black"
+
+                BonusReroll ->
+                    "transparent"
+
+                BonusYellow ->
+                    "yellow"
+
+                BonusPurple _ ->
+                    "purple"
+
+        textColor =
+            case bonus of
+                BonusYellow ->
+                    "black"
+
+                otherwise ->
+                    "white"
+
+        label =
+            case bonus of
+                BonusOrange val ->
+                    String.fromInt val
+
+                BonusPurple val ->
+                    String.fromInt val
+
+                BonusFox ->
+                    "🦊"
+
+                BonusPlusOne ->
+                    "+1"
+
+                BonusReroll ->
+                    "🔄"
+
+                BonusBlue ->
+                    "X"
+
+                BonusGreen ->
+                    "X"
+
+                BonusYellow ->
+                    "X"
+    in
+    td [ style "background-color" backgroundColor, style "text-align" "center", style "width" "80px", style "height" "80px", style "color" textColor ] [ span [ style "padding" "20px", style "font-size" "30px" ] [ text label ] ]
 
 
 viewScore : Score -> Html Msg
@@ -1445,22 +1593,26 @@ viewNormal card =
             , col [ width 1 ] []
             , tr [] [ td [ colspan 2 ] [ table [] [ tr [] (List.indexedMap rerollCell card.rerolls) ] ] ]
             , tr [] [ td [ colspan 2 ] [ table [] [ tr [] (List.indexedMap plusOneCell card.plusOnes) ] ] ]
+            , tr [] [ td [ colspan 2 ] [ text "\u{00A0}" ] ]
             , tr []
                 [ td [ style "background-color" "yellow" ]
                     [ yellowSection card.yellow
                     ]
                 , td [ style "background-color" "blue" ] [ blueSection card.blue ]
                 ]
+            , tr [] [ td [ colspan 2 ] [ text "\u{00A0}" ] ]
             , tr []
                 [ td [ colspan 2, style "background-color" "green" ]
                     [ greenSection card.green
                     ]
                 ]
+            , tr [] [ td [ colspan 2 ] [ text "\u{00A0}" ] ]
             , tr []
                 [ td [ colspan 2, style "background-color" "orange" ]
                     [ orangeSection card.orange
                     ]
                 ]
+            , tr [] [ td [ colspan 2 ] [ text "\u{00A0}" ] ]
             , tr []
                 [ td [ colspan 2, style "background-color" "purple" ]
                     [ purpleSection card.purple
@@ -1473,19 +1625,21 @@ viewNormal card =
 
 viewPick : Int -> Html Msg
 viewPick idx =
-    table []
-        [ tr []
-            [ td [] [ textButton TapDice1 "1" ]
-            , td [] [ textButton TapDice2 "2" ]
-            , td [] [ textButton TapDice3 "3" ]
-            ]
-        , tr []
-            [ td [] [ textButton TapDice4 "4" ]
-            , td [] [ textButton TapDice5 "5" ]
-            , td [] [ textButton TapDice6 "6" ]
-            ]
-        , tr [ colspan 2 ]
-            [ td [] [ textButton TapDiceClear "X" ]
+    div [ style "margin" "320px 320px auto" ]
+        [ table []
+            [ tr []
+                [ td [] [ textButton TapDice1 "1" ]
+                , td [] [ textButton TapDice2 "2" ]
+                , td [] [ textButton TapDice3 "3" ]
+                ]
+            , tr []
+                [ td [] [ textButton TapDice4 "4" ]
+                , td [] [ textButton TapDice5 "5" ]
+                , td [] [ textButton TapDice6 "6" ]
+                ]
+            , tr [ colspan 2 ]
+                [ td [] [ textButton TapDiceClear "X" ]
+                ]
             ]
         ]
 
@@ -1524,4 +1678,4 @@ view model =
             viewPick idx
 
         ChoosePurple idx ->
-            viewPick idx
+            viewPick 0
