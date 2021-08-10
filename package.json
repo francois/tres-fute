@@ -2,5 +2,6 @@
   "dependencies": {
     "elm": "^0.19.1-5",
     "elm-format": "^0.8.5"
-  }
+  },
+  "license": "LiLiQ-P-1.1"
 }
